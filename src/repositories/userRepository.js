@@ -11,7 +11,17 @@ async function findByEmail(email) {
   return User.findOne({ email }).select('+password');
 }
 
+const updateDriverLocation = async (driverId, location) => {
+  return User.findByIdAndUpdate(
+    driverId,
+    { location },
+    { new: true }
+  );
+};
+
+
 module.exports = {
   create,
   findByEmail,
+  updateDriverLocation,
 };

@@ -1,20 +1,42 @@
 const locationService = require('../services/locationService');
+const userRepository = require('../repositories/userRepository');
 
-const updateLocation = async (driverId, {latitude, longitude}) => {
+const updateLocation = async (driverId, { latitude, longitude }) => {
 
-    const lat = parseFloat(latitude);
-    const lon = parseFloat(longitude);
+  if (!driverId) {
+    throw new Error('Driver ID missing');
+  }
 
-    try {
-        const res = await locationService.addDriverLocation(driverId, lat, lon);
-        //update the driver location to redis
-    }catch {
-        console.log(error);
-    }
+  if (latitude == null || longitude == null) {
+    throw new Error('Latitude or longitude missing');
+  }
 
-    // update driver location to mongoDB
-    
+  const lat = Number(latitude);
+  const lon = Number(longitude);
 
-}
+  if (Number.isNaN(lat) || Number.isNaN(lon)) {
+    throw new Error('Latitude and longitude must be numbers');
+  }
 
-module.exports = {updateLocation};
+  try {
+    // Redis
+    await locationService.addDriverLocation(driverId, lon, lat);
+
+    // MongoDB
+    await userRepository.updateDriverLocation(driverId, {
+      type: 'Point',
+      coordinates: [lon, lat],
+    });
+
+    return {
+      status: 'success',
+      message: 'Location updated successfully',
+    };
+
+  } catch (error) {
+    console.error('DriverService.updateLocation error:', error);
+    throw new Error('Could not update driver location');
+  }
+};
+
+module.exports = { updateLocation };

@@ -1,48 +1,69 @@
 const redisClient = require('../utils/redisClient');
 
-class locationService {
+class LocationService {
 
-    async addDriverLocation(driverId, longitude, latitude) {
-
-        try {
-            await redisClient.sendCommand([
-                'GEOADD',
-                'drivers',
-                longitude.toString(),
-                latitude.toString(),
-                driverId.toString(),
-            ]);
-        } catch (error) {
-            console.log("Cannot add to redis", error);
-        }
+  async addDriverLocation(driverId, longitude, latitude) {
+    // 🔐 SAFETY CHECKS
+    if (!driverId) {
+      throw new Error('Driver ID is missing');
     }
 
-    async findNearbyDrivers(longitude, latitude, radiusKm) {
-        const nearbyDrivers = await redisClient.sendCommand([
-          'GEORADIUS',
-          'drivers',
-          longitude.toString(),
-          latitude.toString(),
-          radiusKm.toString(),
-          'km',
-          'WITHCOORD'
-        ]);
-    
-        return nearbyDrivers;
-      }
-
-    async storeNotifiedDrivers(bookingId, driverIds) {
-  
-        for (const driverId of driverIds) {
-          const addedCount = await redisClient.sAdd(`notifiedDrivers:${bookingId}`, driverId);
-          console.log(`Added driver ${driverId} to the set for booking ${bookingId}, result: ${addedCount}`);
-        }
+    if (latitude == null || longitude == null) {
+      throw new Error('Latitude or Longitude missing');
     }
 
-    async getNotifiedDrivers(bookingId) {
-        const nearbyDrivers = await redisClient.sMembers(`notifiedDrivers:${bookingId}`);
-        return nearbyDrivers;
+    try {
+      await redisClient.sendCommand([
+        'GEOADD',
+        'drivers',
+        longitude.toString(), // Redis expects: lon first
+        latitude.toString(),
+        driverId.toString(),
+      ]);
+    } catch (error) {
+      console.error('Cannot add to redis', error);
+      throw error;
     }
+  }
+
+  async findNearbyDrivers(longitude, latitude, radiusKm) {
+    if (longitude == null || latitude == null || radiusKm == null) {
+      throw new Error('Invalid geo search parameters');
+    }
+
+    const nearbyDrivers = await redisClient.sendCommand([
+      'GEORADIUS',
+      'drivers',
+      longitude.toString(),
+      latitude.toString(),
+      radiusKm.toString(),
+      'km',
+      'WITHCOORD',
+    ]);
+
+    return nearbyDrivers;
+  }
+
+  async storeNotifiedDrivers(bookingId, driverIds) {
+    if (!bookingId || !Array.isArray(driverIds)) {
+      throw new Error('Invalid bookingId or driverIds');
+    }
+
+    for (const driverId of driverIds) {
+      await redisClient.sAdd(
+        `notifiedDrivers:${bookingId}`,
+        driverId.toString()
+      );
+    }
+  }
+
+  async getNotifiedDrivers(bookingId) {
+    if (!bookingId) {
+      throw new Error('Booking ID missing');
+    }
+
+    return redisClient.sMembers(`notifiedDrivers:${bookingId}`);
+  }
 }
 
-module.exports = new locationService();
+module.exports = new LocationService();
