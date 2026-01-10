@@ -1,6 +1,7 @@
 const bookingRepository = require('../repositories/bookingRepository');
 const locationService = require('./locationService');
 const {haversineDistance } = require('../utils/distance');
+
 const BASIC_FARE = 50;
 const RATE_PER_KM = 12;
 
@@ -28,11 +29,10 @@ const findNearbyDrivers = async (location, radius = 5) => {
     // Ensure the radius is a number
     const radiusKm = parseFloat(radius);
   
+    const nearbyDrivers = await locationService.findNearbyDrivers(longitude, latitude, radiusKm);
     if (isNaN(longitude) || isNaN(latitude) || isNaN(radiusKm)) {
       throw new Error('Invalid coordinates or radius');
     }
-  
-    const nearbyDrivers = await locationService.findNearbyDrivers(longitude, latitude, radiusKm);
   
     return nearbyDrivers;
   };

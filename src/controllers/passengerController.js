@@ -8,9 +8,12 @@ const createBooking = async (req, res,next) => {
         const booking = await bookingService.createBooking({passengerId: req.user._id, source, destination});    
         // find nearby drivers >> using redis DB
         // notify the nearby drivers
-        const nearbyDrivers = await bookingService.findNearbyDrivers(source);        
+        const driverIds = [];
+        const nearbyDrivers = await bookingService.findNearbyDrivers(source);    
+  
         console.log("near", nearbyDrivers);
-        const driverIds = nearbyDrivers.map(driver => driver[0]);
+
+      
                         
         const rideInfo = {
             source,

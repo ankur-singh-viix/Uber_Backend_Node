@@ -29,7 +29,7 @@ class LocationService {
   async findNearbyDrivers(longitude, latitude, radiusKm) {
     if (longitude == null || latitude == null || radiusKm == null) {
       throw new Error('Invalid geo search parameters');
-    }
+    } 
 
     const nearbyDrivers = await redisClient.sendCommand([
       'GEORADIUS',
