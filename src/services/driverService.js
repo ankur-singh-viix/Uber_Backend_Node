@@ -33,7 +33,8 @@ const updateLocation = async (driverId, { latitude, longitude }) => {
       message: 'Location updated successfully',
     };
 
-  } catch (error) {
+  } 
+  catch (error) {
     console.error('DriverService.updateLocation error:', error);
     throw new Error('Could not update driver location');
   }

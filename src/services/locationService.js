@@ -20,7 +20,9 @@ class LocationService {
         latitude.toString(),
         driverId.toString(),
       ]);
-    } catch (error) {
+    } 
+    
+    catch (error) {
       console.error('Cannot add to redis', error);
       throw error;
     }
@@ -44,16 +46,33 @@ class LocationService {
     return nearbyDrivers;
   }
 
+
+  // async setDriverSocket(driverId, socketId) {
+  //   await redisClient.set(`driverSocket:${driverId}`, socketId);
+  // }
+
+  // async getDriverSocket(driverId) {
+  //   return await redisClient.get(`driverSocket:${driverId}`);
+  // }
+
+  // async deleteDriverSocket(driverId) {
+  //   await redisClient.del(`driverSocket:${driverId}`);
+  // }
+
+  // async deleteBySocketId(socketId) {
+    
+  //   deleteDriverSocket(redisClient.get(`driverSocket:${socketId}`));
+  // }
+
   async storeNotifiedDrivers(bookingId, driverIds) {
     if (!bookingId || !Array.isArray(driverIds)) {
       throw new Error('Invalid bookingId or driverIds');
     }
 
+
     for (const driverId of driverIds) {
-      await redisClient.sAdd(
-        `notifiedDrivers:${bookingId}`,
-        driverId.toString()
-      );
+      await redisClient.sAdd(`notifiedDrivers:${bookingId}`,driverId.toString());
+      console.log(`Added driver ${driverId} to notifiedDrivers for booking ${bookingId}`);
     }
   }
 
@@ -64,6 +83,20 @@ class LocationService {
 
     return redisClient.sMembers(`notifiedDrivers:${bookingId}`);
   }
+
+
+  async getDriverIdBySocket(socketId) {
+  const keys = await redisClient.keys('driverSocket:*');
+
+    for (const key of keys) {
+      const storedSocketId = await redisClient.get(key);
+      if (storedSocketId === socketId) {
+        return key.replace('driverSocket:', '');
+      }
+    }
+    return null;
+  }
+
 }
 
 module.exports = new LocationService();

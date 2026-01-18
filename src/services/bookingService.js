@@ -25,24 +25,55 @@ const createBooking = async({passengerId, source, destination}) => {
 const findNearbyDrivers = async (location, radius = 5) => {
     const longitude = parseFloat(location.longitude);
     const latitude = parseFloat(location.latitude);
-  
-    // Ensure the radius is a number
     const radiusKm = parseFloat(radius);
   
     const nearbyDrivers = await locationService.findNearbyDrivers(longitude, latitude, radiusKm);
     if (isNaN(longitude) || isNaN(latitude) || isNaN(radiusKm)) {
       throw new Error('Invalid coordinates or radius');
     }
-  
-    return nearbyDrivers;
+    //  console.log('Raw drivers from Redis:', nearbyDrivers );
+     // ✅ EXTRACT DRIVER IDS
+  const driverIds = nearbyDrivers.map(d => d[0]);
+
+
+  // console.log('Searching drivers near:', {
+  //   longitude,latitude,radiusKm,driverIds,});
+
+
+    return driverIds;
   };
+
+
+async function notifyDrivers(io, driverIds, rideData) {
+  for (const driverId of driverIds) {
+    const socketId = await locationService.getDriverSocket(driverId);
+    if (socketId) {
+      io.to(socketId).emit('ride-request', rideData);
+    }
+  }
+}
+
+
 
 const assignDriver = async (bookingId, driverId) => {
-    console.log(bookingId)
-    const booking = await bookingRepository.updateBookingStatus(bookingId, driverId, 'confirmed');
-    if (!booking) throw new Error('Booking already confirmed or does not exist');
-    return booking;
+  const booking = await bookingRepository.updateBookingStatus(
+    bookingId,
+    driverId
+  );
+
+  if (!booking) {
+    return {
+      success: false,
+      reason: 'ALREADY_ACCEPTED or NOT_FOUND',
+    };
+  }
+
+  return {
+    success: true,
+    booking,
   };
+};
 
 
-module.exports = {createBooking, findNearbyDrivers, assignDriver};
+
+module.exports = {createBooking, findNearbyDrivers, assignDriver, notifyDrivers};

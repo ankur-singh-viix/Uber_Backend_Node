@@ -26,11 +26,15 @@ const bookingSchema = new mongoose.Schema({
     status: {type: String, enum: ['pending', 'confirmed', 'completed', 'canceled'], default: 'pending'},
     feedback: String,
     rating: Number,
+    
 },
+
 {timestamps: true,
   toJSON: { virtuals: true },   // 👈 IMPORTANT
   toObject: { virtuals: true }, // 👈 IMPORTANT
 });
+
+
 
 
 const Booking = mongoose.model('Booking', bookingSchema);

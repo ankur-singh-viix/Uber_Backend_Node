@@ -9,12 +9,24 @@ const createBooking = async (bookingData) => {
     return booking;
 }
 
-const updateBookingStatus = async (bookingId, driverId, status) => {
-    return Booking.findOneAndUpdate(
-      { _id: bookingId, status: 'pending' },
-      { driver: driverId, status },
-      { new: true }
-    );
+const updateBookingStatus = async (bookingId, driverId) => {
+  return Booking.findOneAndUpdate(
+    {
+      _id: bookingId,
+      status: 'pending',   // 🔥 ATOMIC LOCK
+    },
+    {
+      driver: driverId,
+      status: 'confirmed',
+    },
+    {
+      new: true,
+    }
+  );
 };
 
-module.exports = {createBooking, updateBookingStatus};
+module.exports = {
+  updateBookingStatus,
+  createBooking
+};
+
