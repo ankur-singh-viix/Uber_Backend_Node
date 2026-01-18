@@ -28,7 +28,7 @@ const updateLocation = async (req, res) => {
     }
 
     // ✅ CORRECT call (with await & correct args)
-    await driverService.updateLocation(req.user.id, { latitude, longitude });
+    await driverService.updateLocation(req.user._id, { latitude, longitude });
 
 
     // 🎉 Success response
